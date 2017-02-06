@@ -47,6 +47,13 @@ testVars = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL5TLOG","CS
 afqtVars = c("AFQTPCT","AFQTVOCPCT","AFQTARPCT","AFQTTLPCT","AFQTBXPCT","AFQTPCTTRAN",
             "AFQTVOCPCTTRAN","AFQTARPCTTRAN","AFQTTLPCTTRAN","AFQTBXPCTTRAN")
 
+# Create list of cognitive domains to present separately
+cogVars = c("VisSpat","STWKMem","EpsMem","AbsReason","VerbFlu",
+               "ExecTrailsSwitch","ProcSpeed","ExecCategorySwitch")
+
+# Create list of test variables and cognitive domains
+allVars = c(testVars, cogVars)
+
 # Create indices of different groups
 idxS1T2 = which(subsetDat$VETSAGRP=="V1V2")
 idxS1T1ret = which(subsetDat$VETSAGRP=="V1V2")
@@ -103,13 +110,29 @@ calcPracticeEffect = function(dat, varName, idxS1T2, idxS2T2,idxS1T1ret){
   P
 }
 
+
+# Define function to create composite cognitive domains 
+calcCogDomains = function(testdat){
+  testdat[['VisSpat']] = mean(testdat[c("MR1COR","HFTOTCOR")])
+  testdat[['AbsReason']] = testdat['MTXRAW']
+  testdat[['STWKMem']] = mean(testdat[c("DSFRAW","DSBRAW","LNTOT","SSPFRAW",
+                                              "SSPBRAW","RSATOT")])
+  testdat[['EpsMem']] = mean(testdat[c("CVATOT","CVSDFR","CVLDFR","LMITOT",
+                                               "LMDTOT","VRITOT","VRDTOT")])
+  testdat[['VerbFlu']] = mean(testdat[c("LFCOR","CFCOR")])
+  testdat[['ProcSpeed']] = mean(testdat[c("STRWRAW","STRCRAW","TRL2TLOG","TRL3TLOG")])
+  testdat[['ExecTrailsSwitch']] = testdat['TRL4TLOG']
+  testdat[['ExecCategorySwitch']] = testdat['CSSACC']
+  testdat
+}
 ```
 
 
 ```{r, include=F}
-# Calculate practice effects for all cognitive domains and tests
+# Calculate practice effects for all tests
 pracEffects = sapply(testVars, function(x) calcPracticeEffect(subsetDat, x, idxS1T2,
                                                           idxS2T2, idxS1T1ret))
+pracEffects = calcCogDomains(pracEffects)
 ```
 
 
@@ -129,8 +152,8 @@ idxV2AR = which(subsetDat$VETSAGRP=="V2AR")
 idxV1 = which(subsetDat$VETSAGRP=="V1")
 
 # Initialize empty matrix for permutation results
-permResults = matrix(ncol=length(testVars), nrow=nPerm)
-colnames(permResults) = testVars
+permResults = matrix(ncol=length(allVars), nrow=nPerm)
+colnames(permResults) = allVars
 
 # Run permutations and collect results into matrix
 for(i in 1:nPerm){
@@ -144,7 +167,7 @@ for(i in 1:nPerm){
                                                       idxS1T2perm,
                                                       idxS2T2perm,
                                                       idxS1T1retperm))
-    permResults[i,] = tmpResults
+    permResults[i,] = calcCogDomains(tmpResults)
 }
 permResults = data.frame(permResults)
 # Calculate p values based on permutations and observed values
@@ -163,6 +186,7 @@ bootPracticeEffect = function(data, idx){
                                                   idxV1V2boot,
                                                   idxV2ARboot,
                                                   idxV1V2boot))
+  sampResults = calcCogDomains(sampResults)
   return(sampResults)
 }
 
@@ -207,9 +231,13 @@ results = data.frame("PracticeEffect" = pracEffects, SE=apply(boot.out$t, 2, sd)
 # Get indices of AFQT tests
 idxAFQT = which(rownames(results) %in% afqtVars)
 
-#Split results into composite scores of individual tests and AFQT.
+# Get indices of cognitive domains
+idxCogDomains = which(rownames(results) %in% cogVars)
+
+#Split results into composite scores of individual tests, cognitive domains, and AFQT.
 resultsAFQT = results[idxAFQT,]
-resultsTests = results[-c(idxAFQT),]
+resultsCogDomains = results[idxCogDomains,]
+resultsTests = results[-c(idxAFQT,idxCogDomains),]
 ```
 
 --------------------------------------
@@ -222,9 +250,15 @@ Standard Errors were determined through bootstrapping with `r nBoot` resamples.
 kable(resultsTests, digits=3, caption="Individual Tests")
 ```
 
+
 ```{r, echo=F}
 kable(resultsAFQT, digits=3, caption="AFQT Scores")
 ```
+
+```{r, echo=F}
+kable(resultsCogDomains, digits=3, caption="Cognitive Domain Composites")
+```
+
 
 ```{r, include=F}
 # Write out practice effect results (adjustment value, estimate of precision, and p value)
