@@ -17,7 +17,7 @@
 library(dplyr)
 
 # Load raw test scores and demographics data
-allData = read.csv("~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/raw/V1V2_CogData_Raw.csv",
+allData = read.csv("~/netshare/K/Projects/PracticeEffects/data/raw/V1V2_CogData_Raw.csv",
                    stringsAsFactors = FALSE)
 
 # Convert all variable names to upper case
@@ -38,11 +38,6 @@ allData[timeVarsLogV1] = log(allData[timeVarsV1])
 allData = dplyr::select(allData, -one_of(timeVarsV1))
 allData[timeVarsLogV2] = log(allData[timeVarsV2])                
 allData = dplyr::select(allData, -one_of(timeVarsV2))
-
-### Save out unadjusted scores on raw score scale ###
-write.csv(allData, 
-          "~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1V2_CogData_Unadj.csv",
-          row.names = FALSE)
 
 # Create list of raw variable names to adjust
 rawVarsV1 = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL5TLOG","CSSACC","MTXRAW","CVA1RAW","CVATOT","CVSDFR","CVLDFR",
@@ -126,6 +121,64 @@ addScaleVals = function(df,varname, x) {
 }
 
 
+##########################################
+### Begin creating unadjusted datasets ###
+##########################################
+
+#-----------------------------------------------------------------------------------#
+# Create unadjusted dataset on raw score scale                                      #
+#                                                                                   #
+# Intercept is added back in to avoid mean centering.                               #
+#-----------------------------------------------------------------------------------#
+
+### Save out unadjusted scores on raw score scale ###
+write.csv(allData, 
+          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_Unadj.csv",
+          row.names = FALSE)
+
+
+#-----------------------------------------------------------------------------------#
+# Create dataset adjusted for nas201tran (Age 20 AFQT) and standardized.            #
+#                                                                                   #
+# Dataset with NAS201TRAN (age 20 AFQT) regressed out is standardized (z-scored)    #
+# based on VETSA 2 means and sd.                                                    #
+#-----------------------------------------------------------------------------------#
+
+# Initialize dataframe to hold means and SDs
+scaleValues = data.frame()
+
+allDataZscores = allData
+
+# Scale VETSA 1 variables 
+# Adds mean and SD to dataframe and deletes adjusted raw variables from dataset
+for(i in rawVarsV1){
+  varname = i
+  zvarname = paste(i, "z", sep="_")
+  allDataZscores[[zvarname]] = scale(allDataZscores[[varname]])
+  scaleValues = addScaleVals(scaleValues, varname, allDataZscores[[zvarname]])
+  allDataZscores[[varname]] = NULL
+}
+
+# Scale VETSA 2 variables using VETSA 1 mean and SD
+# Delete adjusted raw variable from dataset
+for(i in rawVarsV2){
+  varnameV2 = i
+  zvarname = paste(i, "z", sep="_")
+  varnameV1 = gsub("_V2","",varnameV2)
+  allDataZscores[[zvarname]] = scale(allDataZscores[[varnameV2]],
+                                        center=scaleValues$Mean[scaleValues$Variable==varnameV1],
+                                        scale=scaleValues$SD[scaleValues$Variable==varnameV1])
+  allDataZscores[[varnameV2]] = NULL
+}
+
+# Save out unadjusted and z-scored dataset
+write.csv(allDataZscores, 
+          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_Unadj_Z.csv",
+          row.names = FALSE)
+
+# Save out means and standard deviations used to standardize scores
+write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/V1_Unadj_Means_SDs.csv",
+          row.names = FALSE)
 
 ########################################
 ### Begin creating adjusted datasets ###
@@ -154,7 +207,7 @@ regVars = paste("scale(NAS201TRAN)", sep=" + ")
 nasAdjRawScoresData = adjustDataset(regVars, adjVars, nDemoVars, "nas", data)
 
 # Save out dataset with Age 20 AFQT regressed out
-write.csv(nasAdjRawScoresData, "~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1V2_CogData_NASAdj.csv",
+write.csv(nasAdjRawScoresData, "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_NASAdj.csv",
           row.names=F)
 
 #-----------------------------------------------------------------------------------#
@@ -193,11 +246,11 @@ for(i in rawVarsV2){
 
 # Save out adjusted and z-scored dataset
 write.csv(nasAdjZscoresData, 
-          "~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1V2_CogData_NASAdj_Z.csv",
+          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_NASAdj_Z.csv",
           row.names = FALSE)
 
 # Save out means and standard deviations used to standardize scores
-write.csv(scaleValues, "~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1_NASAdj_Means_SDs.csv",
+write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/V1_NASAdj_Means_SDs.csv",
           row.names = FALSE)
 
 
@@ -224,7 +277,7 @@ regVars = paste("scale(TEDALL)", sep=" + ")
 tedAdjRawScoresData = adjustDataset(regVars, adjVars, nDemoVars, "ted", data)
 
 # Save out dataset with Education regressed out
-write.csv(tedAdjRawScoresData, "~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1V2_CogData_TEDALLAdj.csv",
+write.csv(tedAdjRawScoresData, "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_TEDALLAdj.csv",
           row.names=F)
 
 #-----------------------------------------------------------------------------------#
@@ -263,9 +316,9 @@ for(i in rawVarsV2){
 
 # Save out adjusted and z-scored dataset
 write.csv(tedAdjZscoresData, 
-          "~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1V2_CogData_TEDALLAdj_Z.csv",
+          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_TEDALLAdj_Z.csv",
           row.names = FALSE)
 
 # Save out means and standard deviations used to standardize scores
-write.csv(scaleValues, "~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1_TEDALLAdj_Means_SDs.csv",
+write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/V1_TEDALLAdj_Means_SDs.csv",
           row.names = FALSE)
