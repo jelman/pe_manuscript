@@ -24,7 +24,7 @@ library(boot)
 
 ```{r, include=F}
 # Load data
-allDat = read.csv("~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/data/V1V2_CogData_TEDALLAdj_Z.csv")
+allDat = read.csv("~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_TEDALLAdj_Z.csv")
 
 # Select subjects from groups of interest
 subsetDat = allDat %>%
@@ -262,7 +262,7 @@ kable(resultsCogDomains, digits=3, caption="Cognitive Domain Composites")
 
 ```{r, include=F}
 # Write out practice effect results (adjustment value, estimate of precision, and p value)
-write.csv(results, '~/netshare/M/PSYCH/KREMEN/Practice Effect Cognition/results/PracEffectValues_TEDALLAdj_Z.csv')
+write.csv(results, '~/netshare/K/Projects/PracticeEffects/results/PracEffectValues_TEDALLAdj_Z.csv')
 ```
 
 
