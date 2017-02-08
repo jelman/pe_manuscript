@@ -109,18 +109,19 @@ calcPracticeEffect = function(dat, varName, idxS1T2, idxS2T2,idxS1T1ret){
   P
 }
 
-# Define function to create composite cognitive domains 
+# Define function to create composite cognitive domains. Take absolute value to account for domains that 
+# incorporate practice effects with different signs (i.e., # correct and reaction time).
 calcCogDomains = function(testdat){
-  testdat[['VisSpat']] = mean(testdat[c("MR1COR","HFTOTCOR")])
-  testdat[['AbsReason']] = testdat['MTXRAW']
-  testdat[['STWKMem']] = mean(testdat[c("DSFRAW","DSBRAW","LNTOT","SSPFRAW",
-                                              "SSPBRAW","RSATOT")])
-  testdat[['EpsMem']] = mean(testdat[c("CVATOT","CVSDFR","CVLDFR","LMITOT",
-                                               "LMDTOT","VRITOT","VRDTOT")])
-  testdat[['VerbFlu']] = mean(testdat[c("LFCOR","CFCOR")])
-  testdat[['ProcSpeed']] = mean(testdat[c("STRWRAW","STRCRAW","TRL2TLOG","TRL3TLOG")])
-  testdat[['ExecTrailsSwitch']] = testdat['TRL4TLOG']
-  testdat[['ExecCategorySwitch']] = testdat['CSSACC']
+  testdat[['VisSpat']] = mean(abs(testdat[c("MR1COR","HFTOTCOR")]))
+  testdat[['AbsReason']] = abs(testdat['MTXRAW'])
+  testdat[['STWKMem']] = mean(abs(testdat[c("DSFRAW","DSBRAW","LNTOT","SSPFRAW",
+                                              "SSPBRAW","RSATOT")]))
+  testdat[['EpsMem']] = mean(abs(testdat[c("CVATOT","CVSDFR","CVLDFR","LMITOT",
+                                               "LMDTOT","VRITOT","VRDTOT")]))
+  testdat[['VerbFlu']] = mean(abs(testdat[c("LFCOR","CFCOR")]))
+  testdat[['ProcSpeed']] = mean(abs(testdat[c("STRWRAW","STRCRAW","TRL2TLOG","TRL3TLOG")]))
+  testdat[['ExecTrailsSwitch']] = abs(testdat['TRL4TLOG'])
+  testdat[['ExecCategorySwitch']] = abs(testdat['CSSACC'])
   testdat
 }
 ```
@@ -170,8 +171,8 @@ for(i in 1:nPerm){
 }
 permResults = data.frame(permResults)
 # Calculate p values based on permutations and observed values
-pvalsPerm = apply(permResults, 1, function(x) pracEffects > abs(x))
-pvals = 1 - (rowMeans(pvalsPerm))
+pvalsPerm = apply(permResults, 1, function(x) abs(x) >= abs(pracEffects))
+pvals = rowMeans(pvalsPerm)
 ```
 
 ```{r, include=FALSE}
