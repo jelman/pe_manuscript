@@ -48,10 +48,10 @@ lmStroop_V2 = lm(STRCWRAW_V2 ~ STRWRAW_V2 + STRCRAW_V2, data=allData, na.action=
 allData[["STRCWADJ_V2"]] = residuals(lmStroop_V2) + coef(lmStroop_V2)[[1]]
 
 # Category Switching
-lmCatSwitch = lm(CSSACC ~ CFCOR, data=allData, na.action=na.exclude)
-allData[["CSSACCADJ"]] = residuals(lmCatSwitch) + coef(lmCatSwitch)[[1]]
-lmCatSwitch_V2 = lm(CSSACC_V2 ~ CFCOR_V2, data=allData, na.action=na.exclude)
-allData[["CSSACCADJ_V2"]] = residuals(lmCatSwitch_V2) + coef(lmCatSwitch_V2)[[1]]
+lmCatSwitch = lm(CSCOR ~ CFCOR, data=allData, na.action=na.exclude)
+allData[["CSCORADJ"]] = residuals(lmCatSwitch) + coef(lmCatSwitch)[[1]]
+lmCatSwitch_V2 = lm(CSCOR_V2 ~ CFCOR, data=allData, na.action=na.exclude)
+allData[["CSCORADJ_V2"]] = residuals(lmCatSwitch_V2) + coef(lmCatSwitch_V2)[[1]]
 
 # Trails Switching
 lmTrails = lm(TRL4TLOG ~ TRL2TLOG + TRL3TLOG, data=allData, na.action=na.exclude)
@@ -60,10 +60,10 @@ lmTrails_V2 = lm(TRL4TLOG_V2 ~ TRL2TLOG_V2 + TRL3TLOG_V2, data=allData, na.actio
 allData[["TRL4TLOGADJ_V2"]] = residuals(lmTrails_V2) + coef(lmTrails_V2)[[1]]
 
 # Create list of raw variable names to adjust
-rawVarsV1 = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL4TLOGADJ","TRL5TLOG","CSSACC","CSSACCADJ","MTXRAW","CVA1RAW","CVATOT","CVSDFR","CVLDFR",
+rawVarsV1 = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL4TLOGADJ","TRL5TLOG","CSSACC","MTXRAW","CVA1RAW","CVATOT","CVSDFR","CVLDFR",
               "AFQTPCT","AFQTVOCPCT","AFQTARPCT","AFQTTLPCT","AFQTBXPCT","AFQTPCTTRAN","AFQTVOCPCTTRAN","AFQTARPCTTRAN","AFQTTLPCTTRAN",
               "AFQTBXPCTTRAN","DSFRAW","DSBRAW","DSFMAX","SSPFRAW","SSPBRAW","LNTOT","LMITOT","LMDTOT","VRITOT","VRDTOT","VRCTOT","HFTOTCOR",
-              "STRWRAW","STRCRAW","STRCWRAW","STRCWADJ","LFFCOR","LFACOR","LFSCOR","LFCOR","CFANCOR","CFBNCOR","CFCOR","CSCOR","SRTLMEANLOG",
+              "STRWRAW","STRCRAW","STRCWRAW","STRCWADJ","LFFCOR","LFACOR","LFSCOR","LFCOR","CFANCOR","CFBNCOR","CFCOR","CSCOR","CSCORADJ","SRTLMEANLOG",
               "SRTLSTDLOG","SRTRMEANLOG","SRTRSTDLOG","SRTGMEANLOG","SRTGSTDLOG","CHRTLMEANLOG","CHRTRMEANLOG","CHRTLSTDLOG",
               "CHRTRSTDLOG","CHRTGMEANLOG","CHRTGSTDLOG","RSATOT","AXHITRATE","AXFARATE","AXMISSRATE","BXHITRATE","BXFARATE",
               "BXMISSRATE","CPTDPRIME")
@@ -153,7 +153,7 @@ addScaleVals = function(df,varname, x) {
 
 ### Save out unadjusted scores on raw score scale ###
 write.csv(allData, 
-          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_Unadj.csv",
+          "~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_Unadj.csv",
           row.names = FALSE)
 
 
@@ -193,11 +193,11 @@ for(i in rawVarsV2){
 
 # Save out unadjusted and z-scored dataset
 write.csv(allDataZscores, 
-          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_Unadj_Z.csv",
+          "~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_Unadj_Z.csv",
           row.names = FALSE)
 
 # Save out means and standard deviations used to standardize scores
-write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/V1_Unadj_Means_SDs.csv",
+write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/testing/V1_Unadj_Means_SDs.csv",
           row.names = FALSE)
 
 ########################################
@@ -227,7 +227,7 @@ regVars = paste("scale(NAS201TRAN)", sep=" + ")
 nasAdjRawScoresData = adjustDataset(regVars, adjVars, nDemoVars, "nas", data)
 
 # Save out dataset with Age 20 AFQT regressed out
-write.csv(nasAdjRawScoresData, "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_NASAdj.csv",
+write.csv(nasAdjRawScoresData, "~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_NASAdj.csv",
           row.names=F)
 
 #-----------------------------------------------------------------------------------#
@@ -266,11 +266,11 @@ for(i in rawVarsV2){
 
 # Save out adjusted and z-scored dataset
 write.csv(nasAdjZscoresData, 
-          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_NASAdj_Z.csv",
+          "~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_NASAdj_Z.csv",
           row.names = FALSE)
 
 # Save out means and standard deviations used to standardize scores
-write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/V1_NASAdj_Means_SDs.csv",
+write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/testing/V1_NASAdj_Means_SDs.csv",
           row.names = FALSE)
 
 
@@ -297,7 +297,7 @@ regVars = paste("scale(TEDALL)", sep=" + ")
 tedAdjRawScoresData = adjustDataset(regVars, adjVars, nDemoVars, "ted", data)
 
 # Save out dataset with Education regressed out
-write.csv(tedAdjRawScoresData, "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_TEDALLAdj.csv",
+write.csv(tedAdjRawScoresData, "~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_TEDALLAdj.csv",
           row.names=F)
 
 #-----------------------------------------------------------------------------------#
@@ -336,9 +336,9 @@ for(i in rawVarsV2){
 
 # Save out adjusted and z-scored dataset
 write.csv(tedAdjZscoresData, 
-          "~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_TEDALLAdj_Z.csv",
+          "~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_TEDALLAdj_Z.csv",
           row.names = FALSE)
 
 # Save out means and standard deviations used to standardize scores
-write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/V1_TEDALLAdj_Means_SDs.csv",
+write.csv(scaleValues, "~/netshare/K/Projects/PracticeEffects/data/testing/V1_TEDALLAdj_Means_SDs.csv",
           row.names = FALSE)

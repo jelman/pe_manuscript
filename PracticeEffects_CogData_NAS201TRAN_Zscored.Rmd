@@ -34,18 +34,18 @@ subsetDat = allDat %>%
 V1neDat = allDat %>% filter(VETSAGRP=="v1ne")
 
 # Create vector of all variable names to calculate practice effects for
-testVars = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL5TLOG","CSSACC","MTXRAW","CVA1RAW",
+testVars = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL5TLOG","TRL4TLOGADJ","CSSACC","CSSACCADJ","MTXRAW","CVA1RAW",
              "CVATOT","CVSDFR","CVLDFR","AFQTPCT","AFQTVOCPCT","AFQTARPCT","AFQTTLPCT","AFQTBXPCT",
              "AFQTPCTTRAN","AFQTVOCPCTTRAN","AFQTARPCTTRAN","AFQTTLPCTTRAN","AFQTBXPCTTRAN","DSFRAW",
              "DSBRAW","DSFMAX","SSPFRAW","SSPBRAW","LNTOT","LMITOT","LMDTOT","VRITOT","VRDTOT","VRCTOT","HFTOTCOR",
-             "STRWRAW","STRCRAW","STRCWRAW","LFFCOR","LFACOR","LFSCOR","LFCOR","CFANCOR","CFBNCOR","CFCOR",
+             "STRWRAW","STRCRAW","STRCWRAW","STRCWADJ","LFFCOR","LFACOR","LFSCOR","LFCOR","CFANCOR","CFBNCOR","CFCOR",
              "CSCOR","SRTLMEANLOG","SRTLSTDLOG","SRTRMEANLOG","SRTRSTDLOG","SRTGMEANLOG","SRTGSTDLOG",
              "CHRTLMEANLOG","CHRTRMEANLOG","CHRTLSTDLOG","CHRTRSTDLOG","CHRTGMEANLOG","CHRTGSTDLOG","RSATOT",
              "AXHITRATE","AXFARATE","AXMISSRATE","BXHITRATE","BXFARATE","BXMISSRATE","CPTDPRIME")
 
 # Create list of cognitive domains to present separately
 cogVars = c("VisSpat","STWKMem","EpsMem","AbsReason","VerbFlu",
-               "ExecTrailsSwitch","ProcSpeed","ExecCategorySwitch")
+               "ProcSpeed","Executive")
 
 # Create list of test variables and cognitive domains
 allVars = c(testVars, cogVars)
@@ -112,16 +112,15 @@ calcPracticeEffect = function(dat, varName, idxS1T2, idxS2T2,idxS1T1ret){
 # Define function to create composite cognitive domains. Take absolute value to account for domains that 
 # incorporate practice effects with different signs (i.e., # correct and reaction time).
 calcCogDomains = function(testdat){
-  testdat[['VisSpat']] = mean(abs(testdat[c("MR1COR","HFTOTCOR")]))
-  testdat[['AbsReason']] = abs(testdat['MTXRAW'])
-  testdat[['STWKMem']] = mean(abs(testdat[c("DSFRAW","DSBRAW","LNTOT","SSPFRAW",
-                                              "SSPBRAW","RSATOT")]))
-  testdat[['EpsMem']] = mean(abs(testdat[c("CVATOT","CVSDFR","CVLDFR","LMITOT",
-                                               "LMDTOT","VRITOT","VRDTOT")]))
-  testdat[['VerbFlu']] = mean(abs(testdat[c("LFCOR","CFCOR")]))
-  testdat[['ProcSpeed']] = mean(abs(testdat[c("STRWRAW","STRCRAW","TRL2TLOG","TRL3TLOG")]))
-  testdat[['ExecTrailsSwitch']] = abs(testdat['TRL4TLOG'])
-  testdat[['ExecCategorySwitch']] = abs(testdat['CSSACC'])
+  testdat[['VisSpat']] = mean(testdat[c("MR1COR","HFTOTCOR")])
+  testdat[['STWKMem']] = mean(testdat[c("DSFRAW","DSBRAW","LNTOT","SSPFRAW",
+                                              "SSPBRAW","RSATOT")])
+  testdat[['EpsMem']] = mean(testdat[c("CVATOT","CVSDFR","CVLDFR","LMITOT",
+                                               "LMDTOT","VRITOT","VRDTOT")])
+  testdat[['AbsReason']] = testdat['MTXRAW']
+  testdat[['VerbFlu']] = mean(testdat[c("LFCOR","CFCOR")])
+  testdat[['ProcSpeed']] =mean(c(testdat[c("STRWRAW","STRCRAW")],(-1 *testdat[c("TRL2TLOG","TRL3TLOG")]))) # Flip sign of RT measures
+  testdat[['Executive']] = mean(c(testdat[c('STRCWADJ','CSSACCADJ')], (testdat['TRL4TLOGADJ'] * -1))) # Flip sign of RT measures
   testdat
 }
 ```
