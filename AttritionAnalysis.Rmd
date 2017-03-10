@@ -1,0 +1,115 @@
+---
+title: "Analysis of factors related to attrition"
+author: "Jeremy Elman"
+date: '`r Sys.Date()`'
+output: html_notebook
+---
+
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+
+```{r, include=F}
+library(dplyr)
+library(psych)
+library(knitr)
+library(lmerTest)
+library(purrr)
+library(ggplot2)
+library(tidyr)
+```
+
+```{r, include=F}
+# Load data and filter our new V1 subjects
+df = read.csv("/home/jelman/netshare/K/Projects/PracticeEffects/data/GEE/AttritionData.csv")
+names(df) = toupper(names(df))
+df = df %>% filter(VETSAGRP!="v1ne") 
+df$VETSAGRP = factor(df$VETSAGRP)
+```
+
+How many subjects in each group?
+```{r}
+table(df$VETSAGRP)
+```
+
+```{r, include=F}
+# Recode factor variables from 1/2 to 0/1
+recodeVars = c("DIABYN","BRONYN","EMPHYN","ASTHYN","CANCYN","OARTYN","RARTYN","HATTYN","HRTFYN","HRTSURGY",
+               "ANGIYN","HYPTYN","PRVDYN","CIRRYN","AIDSYN","DIABYN_V2","BRONYN_V2","EMPHYN_V2",
+               "ASTHYN_V2","CANCYN_V2","OARTYN_V2","RARTYN_V2","HATTYN_V2","HRTFYN_V2","HRTSURGY_V2",
+               "ANGIYN_V2","HYPTYN_V2","PRVDYN_V2","CIRRYN_V2","AIDSYN_V2")
+df = df %>% mutate_at(vars(one_of(recodeVars)), funs((. * -1) + 2))
+
+# Create factor
+factorVars = c("TWIN","ZYGOS","APOE4","ETHNALL","RACEALL","VETSAGRP","DECEASED2013","DECEASEDSIB","TOCC",
+               "DIABYN","BRONYN","EMPHYN","ASTHYN","CANCYN","OARTYN","RARTYN","HATTYN","HRTFYN","HRTSURGY",
+               "ANGIYN","HYPTYN","PRVDYN","CIRRYN","AIDSYN","TOCC_V2","DIABYN_V2","BRONYN_V2","EMPHYN_V2",
+               "ASTHYN_V2","CANCYN_V2","OARTYN_V2","RARTYN_V2","HATTYN_V2","HRTFYN_V2","HRTSURGY_V2",
+               "ANGIYN_V2","HYPTYN_V2","PRVDYN_V2","CIRRYN_V2","AIDSYN_V2")
+df[,factorVars] = lapply(df[,factorVars], factor)
+```
+
+Plot variables to check distributions
+```{r, echo=F}
+# df %>%
+#   keep(is.numeric) %>% 
+#   gather() %>% 
+#   ggplot(aes(value)) +
+#   facet_wrap(~ key, scales = "free") +
+#   geom_histogram()
+```
+
+```{r, include=F}
+# Transform numeric variables where needed
+df$DEPLOG_V1 = log(df$DEP_V1 + .01)
+df$DEPLOG_V2 = log(df$DEP_V2 + .01)
+```
+
+```{r, include=F}
+# Filter for subjects of interest and create V1 and V2 datasets
+dfV1 = subset(df, (VETSAGRP=="V1" | VETSAGRP=="V1V2"))
+dfV2 = subset(df, (VETSAGRP=="V1V2" | VETSAGRP=="V2AR"))
+dfV1$VETSAGRP = factor(dfV1$VETSAGRP)
+dfV2$VETSAGRP = factor(dfV2$VETSAGRP)
+
+dfV1 = dfV1 %>% dplyr::select(-ends_with("_V2"), -dplyr::contains("FU1"))
+```
+
+```{r, include=F}
+# Create lists of variables to run tests on
+catVars = c("APOE4","ETHNALL","RACEALL","DECEASEDSIB",
+             "DIABYN","BRONYN","EMPHYN","ASTHYN","CANCYN","OARTYN","RARTYN","HATTYN","HRTFYN","HRTSURGY",
+             "ANGIYN","HYPTYN","PRVDYN","CIRRYN","AIDSYN")
+contVars = c("AGE_IN","TEDALL","NAS201TRAN","BMI","SUBJINCOME","TOTINCOME","DEPLOG_V1")
+
+# Z score continuous variables
+for (x in contVars) {
+  newcol = paste0('z',x)
+  dfV1[[newcol]] = as.numeric(scale(dfV1[[x]], center=TRUE, scale=TRUE))
+}
+zcontVars = paste0("z",contVars)
+allVars = c(catVars, zcontVars)
+```
+
+
+## Full model, backward elimination
+
+Need to omit records with missing data. How many subjects remain?
+```{r}
+dfV1complete = dfV1 %>% select(VETSAID, CASE, VETSAGRP, one_of(catVars), one_of(contVars)) %>% na.omit(.)
+table(dfV1complete$VETSAGRP)
+```
+
+```{r}
+# fmla = paste0("VETSAGRP ~ ", paste(allVars, collapse=" + "))
+# glm.full = glm(fmla, family=binomial, data=dfV1)
+glm.full = glm(VETSAGRP ~  APOE4 + DECEASEDSIB + ETHNALL + DIABYN + BRONYN + EMPHYN + ASTHYN + CANCYN + OARTYN + RARTYN + HATTYN + HRTFYN + 
+                 HRTSURGY + ANGIYN + HYPTYN + PRVDYN + CIRRYN + AIDSYN + zAGE_IN + zTEDALL + zNAS201TRAN + zBMI + zSUBJINCOME 
+               + zTOTINCOME + zDEPLOG_V1, family=binomial,  control = list(maxit = 50), data=na.omit(dfV1))
+back.glm.full = stats::step(glm.full, direction="backward")
+summary(back.glm.full)
+```
+
+
