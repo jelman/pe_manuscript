@@ -29,7 +29,7 @@ library(dplyr)
 ###############################################
 
 # Basenames of scores to adjust
-varNames = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL5TLOG","TRLT4TLOGADJ","CSSACC","CSSACCADJ","MTXRAW","CVA1RAW","CVATOT","CVSDFR","CVLDFR",
+varNames = c("MR1COR","TRL1TLOG","TRL2TLOG","TRL3TLOG","TRL4TLOG","TRL5TLOG","TRL4TLOGADJ","CSSACC","CSSACCADJ","MTXRAW","CVA1RAW","CVATOT","CVSDFR","CVLDFR",
              "AFQTPCT","AFQTVOCPCT","AFQTARPCT","AFQTTLPCT","AFQTBXPCT","AFQTPCTTRAN","AFQTVOCPCTTRAN","AFQTARPCTTRAN","AFQTTLPCTTRAN",
              "AFQTBXPCTTRAN","DSFRAW","DSBRAW","DSFMAX","SSPFRAW","SSPBRAW","LNTOT","LMITOT","LMDTOT","VRITOT","VRDTOT","VRCTOT","HFTOTCOR",
              "STRWRAW","STRCRAW","STRCWRAW","STRCWADJ","LFFCOR","LFACOR","LFSCOR","LFCOR","CFANCOR","CFBNCOR","CFCOR","CSCOR","SRTLMEANLOG",
@@ -55,11 +55,11 @@ timeCeiling = function(x, maxt){
 #-----------------------------------------------------------------#
 
 # Load dataset to be adjusted: No age 20 afqt adjustment, raw score scale
-unadj_df = read.csv("~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_Unadj.csv",
+unadj_df = read.csv("~/netshare/K/Projects/PracticeEffects/data/Ronnlund/V1V2_CogData_Unadj.csv",
                         stringsAsFactors = F)
 
 # Load practice effect values calculated based scores adjusted for AFQT but on raw score scale
-pracEffects = read.csv("~/netshare/K/Projects/PracticeEffects/results/PracEffectValues_NASAdj.csv",
+pracEffects = read.csv("~/netshare/K/Projects/PracticeEffects/results/PracEffectValues_Ronnlund_NASAdj.csv",
                                 row.names=1, stringsAsFactors = F)
 
 ## Apply practice effect adjustments ## 
@@ -87,7 +87,7 @@ trl150vars = names(unadj_df_PEadj)[grepl("TRL[1235]T", names(unadj_df_PEadj))]
 unadj_df_PEadj = unadj_df_PEadj %>% mutate_at(.cols=trl150vars, .funs=timeCeiling, maxt=150)
 
 # Save out dataset of scores not adjusted for AFQT, raw score scale, practice effect adjusted
-write.csv(unadj_df_PEadj, '~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_PE.csv',
+write.csv(unadj_df_PEadj, '~/netshare/K/Projects/PracticeEffects/data/Ronnlund/V1V2_CogData_PE.csv',
           row.names=FALSE)
 
 #-----------------------------------------------------------------------#
@@ -95,11 +95,11 @@ write.csv(unadj_df_PEadj, '~/netshare/K/Projects/PracticeEffects/data/V1V2_CogDa
 #-----------------------------------------------------------------------#
 
 # Load dataset to be adjusted: Age 20 afqt adjusted, z-score scale
-nas201adjzscore_df = read.csv("~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_NASAdj_Z.csv",
+nas201adjzscore_df = read.csv("~/netshare/K/Projects/PracticeEffects/data/Ronnlund/V1V2_CogData_NASAdj_Z.csv",
                         stringsAsFactors = F)
 
 # Load practice effect values calculated based scores adjusted for AFQT and z-scored based on VETSA 1
-pracEffects_Zscored = read.csv("~/netshare/K/Projects/PracticeEffects/results/testing/PracEffectValues_NASAdj_Z.csv",
+pracEffects_Zscored = read.csv("~/netshare/K/Projects/PracticeEffects/results/PracEffectValues_Ronnlund_NASAdj_Z.csv",
                                row.names=1, stringsAsFactors = F)
 
 ## Apply practice effect adjustments ## 
@@ -109,6 +109,7 @@ idxV1V2 = which(nas201adjzscore_PEadj$VETSAGRP=="V1V2")
 for (varName in varNames) {
   varName_V2 = paste0(varName, "_V2_znas")
   newVarName_V2 = paste0(varName_V2,"p")
+  print(varName_V2)
   peVal = pracEffects_Zscored[varName,"PracticeEffect"]
   nas201adjzscore_PEadj[, newVarName_V2] = nas201adjzscore_PEadj[, varName_V2]
   nas201adjzscore_PEadj[idxV1V2, newVarName_V2] = nas201adjzscore_PEadj[idxV1V2, newVarName_V2] - peVal
@@ -116,33 +117,19 @@ for (varName in varNames) {
 }
 
 # Save out dataset of scores adjusted for AFQT, z-scored to VETSA 1, practice effect adjusted
-write.csv(nas201adjzscore_PEadj, '~/netshare/K/Projects/PracticeEffects/data/testing/V1V2_CogData_NASAdj_Z_PE.csv',
+write.csv(nas201adjzscore_PEadj, '~/netshare/K/Projects/PracticeEffects/data/Ronnlund/V1V2_CogData_NASAdj_Z_PE.csv',
           row.names=FALSE)
 
-# Check for effect of adjusting stroop interference before or after PE adjustment
-tmpdf = select(nas201adjzscore_PEadj, VETSAID,STRWRAW_V2_znasp,STRCRAW_V2_znasp,STRCWRAW_V2_znasp,STRCWADJ_V2_znasp) 
-
-stroopdf = nas201adjzscore_df %>% 
-    select(1:7, starts_with("ST")) %>%
-    inner_join(tmpdf, by="VETSAID")
-
-lmStroop_znas = lm(STRCWRAW_znas ~ STRWRAW_znas + STRCRAW_znas, data=stroopdf, na.action=na.exclude)
-stroopdf[["STRCWADJ_znas_ADJ"]] = residuals(lmStroop_znas) + coef(lmStroop_znas)[[1]]
-lmStroop_V2_znasp = lm(STRCWRAW_V2_znasp ~ STRWRAW_V2_znasp + STRCRAW_V2_znasp, data=stroopdf, na.action=na.exclude)
-stroopdf[["STRCWADJ_V2_znasp_ADJ"]] = residuals(lmStroop_V2_znasp) + coef(lmStroop_V2_znasp)[[1]]
-
-cor.test(stroopdf$STRCWADJ_znas, stroopdf$STRCWADJ_znas_ADJ)
-cor.test(stroopdf$STRCWADJ_V2_znasp, stroopdf$STRCWADJ_V2_znasp_ADJ)
 #--------------------------------------------------------------------------#
 #   3. Scores on  raw score scale that have been adjusted for age 20 AFQT  #
 #--------------------------------------------------------------------------#
 
 # Load dataset to be adjusted: Age 20 afqt adjusted, raw score scale
-nas201adj_df = read.csv("~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_NASAdj.csv",
+nas201adj_df = read.csv("~/netshare/K/Projects/PracticeEffects/data/Ronnlund/V1V2_CogData_NASAdj.csv",
                               stringsAsFactors = F)
 
 # Load practice effect values calculated based scores adjusted for AFQT but on raw score scale
-pracEffects = read.csv("~/netshare/K/Projects/PracticeEffects/results/PracEffectValues_NASAdj.csv",
+pracEffects = read.csv("~/netshare/K/Projects/PracticeEffects/results/PracEffectValues_Ronnlund_NASAdj.csv",
                                row.names=1, stringsAsFactors = F)
 
 ## Apply practice effect adjustments ## 
@@ -171,5 +158,5 @@ trl150vars = names(nas201adj_PEadj)[grepl("TRL[1235]T", names(nas201adj_PEadj))]
 nas201adj_PEadj = nas201adj_PEadj %>% mutate_at(.cols=trl150vars, .funs=timeCeiling, maxt=150)
 
 # Save out dataset of scores adjusted for AFQT, z-scored to VETSA 1, practice effect adjusted
-write.csv(nas201adj_PEadj, '~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_NASAdj_PE.csv',
+write.csv(nas201adj_PEadj, '~/netshare/K/Projects/PracticeEffects/data/Ronnlund/V1V2_CogData_NASAdj_PE.csv',
           row.names=FALSE)
