@@ -24,7 +24,7 @@ library(boot)
 
 ```{r, include=F}
 # Load data
-allDat = read.csv("~/netshare/K/Projects/PracticeEffects/data/V1V2_CogData_NASAdj_Z.csv")
+allDat = read.csv("~/netshare/K/Projects/PracticeEffects/data/Ronnlund/V1V2_CogData_NASAdj_Z.csv")
 
 # Select subjects from groups of interest
 subsetDat = allDat %>%
